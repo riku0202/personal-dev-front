@@ -1,10 +1,68 @@
+import axios from "axios";
 import type { NextPage } from "next";
 import Head from "next/head";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { NextSvg } from "../constants/Svg";
+import { NextSvg, Trash } from "../constants/Svg";
 
 const Home: NextPage = () => {
+  type Todo = {
+    Id: string;
+    Todo: string;
+    Created: string;
+    Updated: string;
+  };
+
+  const [todoList, setTodoList] = useState<Todo[]>([]);
+
+  const apiClient = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_URL,
+  });
+
+  const ref = useRef<HTMLInputElement | null>(null);
+
+  const getTodoList = async () => {
+    const res = await apiClient.get<Todo[]>("/");
+    setTodoList(res.data);
+  };
+
+  const addTodo = async (todo: string) => {
+    const res = await apiClient.post<Todo[]>("/", {
+      todo,
+    });
+
+    setTodoList(res.data);
+  };
+
+  const deleteTodo = async (id: string) => {
+    const res = await apiClient.delete<Todo[]>("/", {
+      params: {
+        id,
+      },
+    });
+
+    setTodoList(res.data);
+  };
+
+  const store = async () => {
+    if (ref.current) {
+      await addTodo(ref.current.value);
+      ref.current.value = "";
+    }
+  };
+
+  // Enterキーを押したときにメモを変更するためのイベント用関数
+  const enter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key == "Enter") {
+      e.preventDefault();
+      store();
+    }
+  };
+
+  useEffect(() => {
+    getTodoList();
+  }, []);
+
   return (
     <>
       <Head>
@@ -22,12 +80,30 @@ const Home: NextPage = () => {
           <h1 className="name">Todo List</h1>
         </nav>
         <div className="contents">
-          <div className="items">
-            <div className="item">item</div>
-            <div className="item">item</div>
-            <div className="item">item</div>
-            <div className="item">item</div>
+          <div className="add">
+            <input
+              className="add-form"
+              type="text"
+              ref={ref}
+              placeholder="TODO"
+              onKeyDown={enter}
+            />
+            <button className="add-button" onClick={store}>
+              ADD
+            </button>
           </div>
+          {todoList && (
+            <ul className="items">
+              {todoList.map((props, index) => (
+                <li key={index} className="item">
+                  {props.Todo}
+                  <label className="trash" onClick={() => deleteTodo(props.Id)}>
+                    {Trash()}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Style>
     </>
@@ -36,19 +112,7 @@ const Home: NextPage = () => {
 
 export default Home;
 
-export async function getStaticProps() {
-  const res = await fetch("https://api.github.com/repos/vercel/next.js");
-  const json = await res.json();
-
-  return {
-    props: {
-      stars: json.stargazers_count,
-    },
-  };
-}
-
 const Style = styled.main`
-  height: 100vh;
   background-color: rgb(35, 39, 47);
   .title {
     display: flex;
@@ -70,14 +134,71 @@ const Style = styled.main`
   .contents {
     margin: 30px 0 0;
     color: #ffffff;
+
+    .add {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+
+      .add-form {
+        line-height: 17px;
+        padding: 10px;
+        font-size: 15px;
+        color: #ffffff;
+        width: 100%;
+        background-color: rgba(52, 58, 70);
+        border-radius: 7px;
+        background-color: rgba(52, 58, 70);
+        border: none;
+        outline: none;
+      }
+
+      .add-button {
+        font-size: 13px;
+        border: none;
+        outline: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        padding: 10px;
+        cursor: pointer;
+        color: #ffffff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        background-color: rgba(8, 126, 164);
+        border-radius: 7px;
+      }
+    }
+
     .items {
       display: flex;
       flex-direction: column;
+      font-size: 15px;
+      line-height: 18px;
       gap: 10px;
+      list-style: none;
+      padding: 0;
+
       .item {
-        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 7px;
         padding: 10px;
         background-color: rgba(52, 58, 70);
+
+        .trash {
+          cursor: pointer;
+          svg {
+            height: 20px;
+            fill: #ffffff;
+            :hover {
+              fill: #ff0000;
+            }
+          }
+        }
       }
     }
 
