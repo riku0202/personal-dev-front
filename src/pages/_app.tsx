@@ -24,7 +24,6 @@ export default MyApp;
 
 export const GlobalStyle = createGlobalStyle`
   html {
-    font-family: 'Sawarabi Mincho', sans-serif;
     font-size: 0.625em;
     font-weight: 400;
     text-align: justify;

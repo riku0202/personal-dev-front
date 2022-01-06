@@ -5,14 +5,37 @@ import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { NextSvg, Trash } from "../constants/Svg";
 
-const Home: NextPage = () => {
-  type Todo = {
-    Id: string;
-    Todo: string;
-    Created: string;
-    Updated: string;
-  };
+type Todo = {
+  Id: string;
+  Todo: string;
+  Created: string;
+  Updated: string;
+};
 
+// 仮データ
+const mockData: Todo[] = [
+  {
+    Id: Math.random().toString(32).substring(2),
+    Todo: "キャベツ買う",
+    Created: Date.now().toString(),
+    Updated: Date.now().toString(),
+  },
+  {
+    Id: Math.random().toString(32).substring(2),
+    Todo: "ニンジン買う",
+    Created: Date.now().toString(),
+    Updated: Date.now().toString(),
+  },
+
+  {
+    Id: Math.random().toString(32).substring(2),
+    Todo: "豚肉買う",
+    Created: Date.now().toString(),
+    Updated: Date.now().toString(),
+  },
+];
+
+const Home: NextPage = () => {
   const [todoList, setTodoList] = useState<Todo[]>([]);
 
   const apiClient = axios.create({
@@ -22,26 +45,42 @@ const Home: NextPage = () => {
   const ref = useRef<HTMLInputElement | null>(null);
 
   const getTodoList = async () => {
-    const res = await apiClient.get<Todo[]>("/");
-    setTodoList(res.data);
+    // 初回Fetch
+    // const res = await apiClient.get<Todo[]>("/");
+    // setTodoList(res.data);
+
+    setTodoList(mockData);
   };
 
   const addTodo = async (todo: string) => {
-    const res = await apiClient.post<Todo[]>("/", {
-      todo,
-    });
+    // Postリクエスト
+    // 本来はTodoを文字列でPost送るとバックエンドでIDと登録日、更新日を追加します
+    // const res = await apiClient.post<Todo[]>("/", {
+    //   todo,
+    // });
+    // setTodoList(res.data);
 
-    setTodoList(res.data);
+    // 仮のデータをセット
+    const newTodo: Todo = {
+      Id: Math.random().toString(32).substring(2),
+      Todo: todo,
+      Created: Date.now().toString(),
+      Updated: Date.now().toString(),
+    };
+    setTodoList(todoList.concat([newTodo]));
   };
 
   const deleteTodo = async (id: string) => {
-    const res = await apiClient.delete<Todo[]>("/", {
-      params: {
-        id,
-      },
-    });
+    // const res = await apiClient.delete<Todo[]>("/", {
+    //   params: {
+    //     id,
+    //   },
+    // });
+    // setTodoList(res.data);
 
-    setTodoList(res.data);
+    const newTodoList = todoList.filter((todo) => todo.Id !== id);
+    console.log(newTodoList);
+    setTodoList(newTodoList);
   };
 
   const store = async () => {
@@ -97,6 +136,7 @@ const Home: NextPage = () => {
               {todoList.map((props, index) => (
                 <li key={index} className="item">
                   {props.Todo}
+                  {props.Id}
                   <label className="trash" onClick={() => deleteTodo(props.Id)}>
                     {Trash()}
                   </label>
